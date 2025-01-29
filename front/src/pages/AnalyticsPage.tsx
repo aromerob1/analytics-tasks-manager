@@ -1,42 +1,75 @@
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from "recharts";
-import { Task } from "../types";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { Task } from '../types';
 
 // Colores para las categorías de tareas
-const CATEGORY_COLORS = ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+const CATEGORY_COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 // Función para calcular métricas
 function calculateMetrics(tasks: Task[]) {
   const totalTasks = tasks?.length;
-  const completedTasks = tasks?.filter(task => task.completedAt).length;
+  const completedTasks = tasks?.filter((task) => task.completedAt).length;
   const pendingTasks = totalTasks - completedTasks;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const completionRate =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Calcular tiempo promedio de completitud
   const completionTimes = tasks
-    ?.filter(task => task.completedAt)
-    .map(task => (new Date(task.completedAt!).getTime() - new Date(task.createdAt).getTime()) / (1000 * 60 * 60 * 24)); // Convertir a días
-  const avgCompletionTime = completionTimes?.length ? (completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length).toFixed(1) : "N/A";
+    ?.filter((task) => task.completedAt)
+    .map(
+      (task) =>
+        (new Date(task.completedAt!).getTime() -
+          new Date(task.createdAt).getTime()) /
+        (1000 * 60 * 60 * 24)
+    ); // Convertir a días
+  const avgCompletionTime = completionTimes?.length
+    ? (
+        completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length
+      ).toFixed(1)
+    : 'N/A';
 
   // Contar tareas completadas por día de la semana
-  const productivityByDay: Record<string, number> = { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0, Sunday: 0 };
-  tasks?.forEach(task => {
+  const productivityByDay: Record<string, number> = {
+    Monday: 0,
+    Tuesday: 0,
+    Wednesday: 0,
+    Thursday: 0,
+    Friday: 0,
+    Saturday: 0,
+    Sunday: 0,
+  };
+  tasks?.forEach((task) => {
     if (task.completedAt) {
-      const day = new Date(task.completedAt).toLocaleDateString("en-US", { weekday: "long" });
+      const day = new Date(task.completedAt).toLocaleDateString('en-US', {
+        weekday: 'long',
+      });
       productivityByDay[day] += 1;
     }
   });
 
   // Contar tareas por categoría
   const categoryCounts: Record<string, number> = {};
-  tasks?.forEach(task => {
+  tasks?.forEach((task) => {
     if (task.category) {
       categoryCounts[task.category] = (categoryCounts[task.category] || 0) + 1;
     }
   });
 
   // Calcular tasa de abandono
-  const abandonedTasks = tasks?.filter(task => task.deleted && !task.completedAt).length;
-  const abandonmentRate = totalTasks > 0 ? Math.round((abandonedTasks / totalTasks) * 100) : 0;
+  const abandonedTasks = tasks?.filter(
+    (task) => task.deleted && !task.completedAt
+  ).length;
+  const abandonmentRate =
+    totalTasks > 0 ? Math.round((abandonedTasks / totalTasks) * 100) : 0;
 
   // Tareas completadas por semana (últimas 6 semanas)
   const weeklyData: Record<string, number> = {};
@@ -47,7 +80,7 @@ function calculateMetrics(tasks: Task[]) {
     const weekLabel = `${week.getMonth() + 1}/${week.getDate()}`;
     weeklyData[weekLabel] = 0;
   }
-  tasks?.forEach(task => {
+  tasks?.forEach((task) => {
     if (task.completedAt) {
       const week = new Date(task.completedAt);
       const weekLabel = `${week.getMonth() + 1}/${week.getDate()}`;
@@ -63,10 +96,21 @@ function calculateMetrics(tasks: Task[]) {
     pendingTasks,
     completionRate,
     avgCompletionTime,
-    productivityByDay: Object.entries(productivityByDay).map(([day, count]) => ({ day, count })),
-    categoryCounts: Object.entries(categoryCounts).map(([category, count], index) => ({ category, count, color: CATEGORY_COLORS[index % CATEGORY_COLORS.length] })),
+    productivityByDay: Object.entries(productivityByDay).map(
+      ([day, count]) => ({ day, count })
+    ),
+    categoryCounts: Object.entries(categoryCounts).map(
+      ([category, count], index) => ({
+        category,
+        count,
+        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      })
+    ),
     abandonmentRate,
-    weeklyTrends: Object.entries(weeklyData).map(([week, count]) => ({ week, count })),
+    weeklyTrends: Object.entries(weeklyData).map(([week, count]) => ({
+      week,
+      count,
+    })),
   };
 }
 
@@ -80,7 +124,7 @@ export default function AnalyticsPage({ tasks }: { tasks: Task[] }) {
     productivityByDay,
     categoryCounts,
     abandonmentRate,
-    weeklyTrends
+    weeklyTrends,
   } = calculateMetrics(tasks);
 
   return (
@@ -120,7 +164,13 @@ export default function AnalyticsPage({ tasks }: { tasks: Task[] }) {
       <h3 className="mt-6 text-lg font-semibold">Tasks by Category</h3>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
-          <Pie dataKey="count" data={categoryCounts} cx="50%" cy="50%" outerRadius={100}>
+          <Pie
+            dataKey="count"
+            data={categoryCounts}
+            cx="50%"
+            cy="50%"
+            outerRadius={100}
+          >
             {categoryCounts.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}

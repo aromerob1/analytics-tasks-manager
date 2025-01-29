@@ -9,7 +9,6 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
@@ -18,7 +17,6 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/signup" element={<SignUpPage />} />
-        
       </Routes>
     </BrowserRouter>
   );

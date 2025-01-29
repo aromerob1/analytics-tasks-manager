@@ -1,6 +1,11 @@
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { DangerModalProps } from "../types";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  DialogTitle,
+} from '@headlessui/react';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { DangerModalProps } from '../types';
 
 export default function DangerModal({ onClose, onConfirm }: DangerModalProps) {
   return (
@@ -11,15 +16,22 @@ export default function DangerModal({ onClose, onConfirm }: DangerModalProps) {
         <DialogPanel className="bg-white rounded shadow-lg max-w-md w-full p-6">
           <div className="sm:flex sm:items-start">
             <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:size-10">
-              <ExclamationTriangleIcon aria-hidden="true" className="size-6 text-red-600" />
+              <ExclamationTriangleIcon
+                aria-hidden="true"
+                className="size-6 text-red-600"
+              />
             </div>
             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
+              <DialogTitle
+                as="h3"
+                className="text-base font-semibold text-gray-900"
+              >
                 Delete Task
               </DialogTitle>
               <div className="mt-2">
                 <p className="text-sm text-gray-500">
-                  Are you sure you want to delete this task? This action cannot be undone.
+                  Are you sure you want to delete this task? This action cannot
+                  be undone.
                 </p>
               </div>
             </div>

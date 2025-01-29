@@ -13,12 +13,12 @@ export type ColumnId = 'todo' | 'doing' | 'done';
 export type Columns = Record<ColumnId, string[]>;
 
 export interface CreateEditModalProps {
-    mode: "create" | "edit"; // Define el modo del modal
-    onClose: () => void; // Función para cerrar el modal
-    onConfirm: () => void; // Acción al confirmar
+  mode: 'create' | 'edit'; // Define el modo del modal
+  onClose: () => void; // Función para cerrar el modal
+  onConfirm: () => void; // Acción al confirmar
 }
 
 export interface DangerModalProps {
-    onClose: () => void; // Función para cerrar el modal
-    onConfirm: () => void; // Acción al confirmar
-  }
+  onClose: () => void; // Función para cerrar el modal
+  onConfirm: () => void; // Acción al confirmar
+}

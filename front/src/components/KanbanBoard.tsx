@@ -34,14 +34,14 @@ export default function KanbanBoard() {
   // **Sensores para manejar dispositivos táctiles y mouse**
   const sensors = useSensors(
     useSensor(PointerSensor, {
-        // Ignorar elementos con `data-drag-disabled`
-        activationConstraint: {
-          distance: 10, // Opcional: umbral mínimo de arrastre
-        },
-        eventListenerOptions: {
-          passive: false, // Permite detener la propagación
-        },
-      }),
+      // Ignorar elementos con `data-drag-disabled`
+      activationConstraint: {
+        distance: 10, // Opcional: umbral mínimo de arrastre
+      },
+      eventListenerOptions: {
+        passive: false, // Permite detener la propagación
+      },
+    })
   );
 
   // **Manejador cuando se termina de arrastrar**
@@ -91,37 +91,44 @@ export default function KanbanBoard() {
       onDragEnd={handleDragEnd}
     >
       <div className="flex space-x-4 items-start">
-  {Object.entries(columns).map(([columnId, tasks]) => (
-    <div key={columnId} className="w-1/3 bg-white p-4 rounded shadow-lg border border-gray-300">
-      <h2
-        className='text-xl font-semibold pb-2 border-b-2 mb-4 text-blue-700 border-blue-400'
-      >
-        {columnId.toUpperCase()}
-      </h2>
+        {Object.entries(columns).map(([columnId, tasks]) => (
+          <div
+            key={columnId}
+            className="w-1/3 bg-white p-4 rounded shadow-lg border border-gray-300"
+          >
+            <h2 className="text-xl font-semibold pb-2 border-b-2 mb-4 text-blue-700 border-blue-400">
+              {columnId.toUpperCase()}
+            </h2>
 
-      <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
-        {tasks.map((task) => (
-          <SortableItem key={task} id={task} />
+            <SortableContext
+              items={tasks}
+              strategy={verticalListSortingStrategy}
+            >
+              {tasks.map((task) => (
+                <SortableItem key={task} id={task} />
+              ))}
+            </SortableContext>
+
+            <button
+              className="w-full p-2 mt-2 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 cursor-pointer"
+              onClick={showCreateModal}
+            >
+              + Add Task
+            </button>
+          </div>
         ))}
-      </SortableContext>
-
-      <button className="w-full p-2 mt-2 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 cursor-pointer" onClick={showCreateModal}>
-        + Add Task
-      </button>
-    </div>
-  ))}
-</div>
-    {/* Modal de creacion */}
-    {createModalOpen && ( 
-    <CreateEditModal
-            mode='create'
-            onClose={() => setCreateModalOpen(false)}
-            onConfirm={() => {
-                // Lógica para crear una nueva tarea
-                setCreateModalOpen(false);
-            }}
-        /> 
-    )}
+      </div>
+      {/* Modal de creacion */}
+      {createModalOpen && (
+        <CreateEditModal
+          mode="create"
+          onClose={() => setCreateModalOpen(false)}
+          onConfirm={() => {
+            // Lógica para crear una nueva tarea
+            setCreateModalOpen(false);
+          }}
+        />
+      )}
     </DndContext>
   );
 }
