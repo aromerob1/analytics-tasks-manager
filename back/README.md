@@ -10,26 +10,26 @@ This is the **Node.js + Express + Sequelize + MySQL** backend for the Analytics 
 - **bcrypt for password hashing**
 
 ## 1. 🚀 Installation
-\```
+```
 cd back
 npm install
-\```
+```
 
 ## 2. 🛠️ Environment Variables
 Create a `.env` file in `back/` and add:
 
-\```
+```
 DB_NAME=name
 DB_USER=root
 DB_PASSWORD=password
 DB_HOST=localhost
 JWT_SECRET=supersecretkey
-\```
+```
 
 ## 3. Run
-\```
+```
 npm run dev
-\```
+```
 
 ## 📂 Code Structure
 - `src/models/` → Database models (Sequelize)
