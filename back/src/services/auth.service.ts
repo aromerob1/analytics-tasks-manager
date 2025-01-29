@@ -8,12 +8,17 @@ const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
 export const registerUser = async (userData: UserAttributes) => {
   const { email, password } = userData;
 
-  // Verificar si el usuario ya existe
+  // Check if user already exists
   const existingUser = await User.findOne({ where: { email } });
   if (existingUser) throw new Error("Email already registered");
 
-  // Crear usuario
-  const newUser = await User.create({ email, password });
+  // 🔹 Hash the password before storing it
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create user with hashed password
+  const newUser = await User.create({ email, password: hashedPassword });
+
+  // Return JWT token
   return generateToken(newUser);
 };
 
