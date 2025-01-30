@@ -1,15 +1,13 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../database";
-import { UserAttributes } from "../interfaces/user.interface";
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../database';
+import { UserAttributes } from '../interfaces/user.interface';
 
-// Definir el modelo de usuario
 export class User extends Model<UserAttributes> implements UserAttributes {
   public id!: number;
   public email!: string;
   public password!: string;
 }
 
-// Inicializar el modelo
 User.init(
   {
     id: {
@@ -29,8 +27,8 @@ User.init(
   },
   {
     sequelize,
-    tableName: "users",
-    modelName: "User",
+    tableName: 'users',
+    modelName: 'User',
     timestamps: true,
   }
 );

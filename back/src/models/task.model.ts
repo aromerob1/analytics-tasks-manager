@@ -1,19 +1,18 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../database";
-import { User } from "./user.model";
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../database';
+import { User } from './user.model';
 
-// Definir el modelo de tarea
 export class Task extends Model<TaskAttributes> implements TaskAttributes {
   public id!: number;
   public description!: string;
   public category!: string;
-  public status!: "todo" | "doing" | "done";
+  public status!: 'todo' | 'doing' | 'done';
   public userId!: number;
   public completedAt?: Date | null;
   public deletedAt?: Date | null;
+  public createdAt!: Date;
 }
 
-// Inicializar el modelo
 Task.init(
   {
     id: {
@@ -30,18 +29,18 @@ Task.init(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("todo", "doing", "done"),
+      type: DataTypes.ENUM('todo', 'doing', 'done'),
       allowNull: false,
-      defaultValue: "todo",
+      defaultValue: 'todo',
     },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: User,
-        key: "id",
+        key: 'id',
       },
-      onDelete: "CASCADE",
+      onDelete: 'CASCADE',
     },
     completedAt: {
       type: DataTypes.DATE,
@@ -54,11 +53,11 @@ Task.init(
   },
   {
     sequelize,
-    tableName: "tasks",
-    modelName: "Task",
+    tableName: 'tasks',
+    modelName: 'Task',
     timestamps: true,
   }
 );
 
-User.hasMany(Task, { foreignKey: "userId" });
-Task.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(Task, { foreignKey: 'userId' });
+Task.belongsTo(User, { foreignKey: 'userId' });

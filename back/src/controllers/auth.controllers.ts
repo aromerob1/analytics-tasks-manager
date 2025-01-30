@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
-import { registerUser, loginUser } from "../services/auth.service";
-import { validationResult } from "express-validator";
-import { asyncHandler } from "../utils/async.handler";
+import { Request, Response } from 'express';
+import { registerUser, loginUser } from '../services/auth.service';
+import { validationResult } from 'express-validator';
+import { asyncHandler } from '../utils/async.handler';
 
 export const registerController = asyncHandler(async (req: Request, res: Response) => {
   const user = await registerUser(req.body);
