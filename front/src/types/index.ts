@@ -1,24 +1,24 @@
-// Tipo para una tarea
 export interface Task {
-  id: string;
+  id: number;
   description: string;
   status: ColumnId;
   createdAt: Date;
-  completedAt?: Date;
-  category?: string;
-  deleted?: boolean;
+  completedAt?: Date | null;
+  category: string;
+  deletedAt?: Date;
 }
 
 export type ColumnId = 'todo' | 'doing' | 'done';
-export type Columns = Record<ColumnId, string[]>;
+export type Columns = Record<ColumnId, Task[]>;
 
 export interface CreateEditModalProps {
-  mode: 'create' | 'edit'; // Define el modo del modal
-  onClose: () => void; // Función para cerrar el modal
-  onConfirm: () => void; // Acción al confirmar
+  mode: 'create' | 'edit';
+  task?: Task;
+  onClose: () => void;
+  onTaskCreatedOrModified: (newTask: Task) => void;
 }
 
 export interface DangerModalProps {
-  onClose: () => void; // Función para cerrar el modal
-  onConfirm: () => void; // Acción al confirmar
+  onClose: () => void;
+  onConfirm: () => void;
 }

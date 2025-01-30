@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogBackdrop,
@@ -5,19 +6,73 @@ import {
   DialogTitle,
 } from '@headlessui/react';
 import {
-  ExclamationTriangleIcon,
   ChevronDownIcon,
   PencilSquareIcon,
   PlusCircleIcon,
 } from '@heroicons/react/24/outline';
-import { CreateEditModalProps } from '../types';
+import { CreateEditModalProps, Task } from '../types';
+import { createTask, updateTask, getTaskById } from '../services/TaskService';
 
 export default function CreateEditModal({
   mode,
+  task,
   onClose,
-  onConfirm,
+  onTaskCreatedOrModified,
 }: CreateEditModalProps) {
   const isEditMode = mode === 'edit';
+
+  const [form, setForm] = useState({
+    description: '',
+    category: 'Work',
+  });
+
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isEditMode && task?.id) {
+      getTaskById(task.id)
+        .then((fetchedTask: Task) => {
+          setForm({
+            description: fetchedTask.description,
+            category: fetchedTask.category,
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching task data for edit:', error);
+        });
+    }
+  }, [isEditMode, task]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    if (error) setError('');
+  };
+
+  const onConfirm = async () => {
+    try {
+      if (!form.description.trim()) {
+        setError('Description cannot be empty.');
+        return;
+      }
+      if (!form.category.trim()) {
+        setError('Category cannot be empty.');
+        return;
+      }
+
+      if (isEditMode && task?.id) {
+        const editedTask = await updateTask(task.id, form);
+        onTaskCreatedOrModified(editedTask);
+      } else {
+        const newTask = await createTask(form);
+        onTaskCreatedOrModified(newTask);
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error saving task:', error);
+    }
+  };
 
   return (
     <Dialog open={true} onClose={onClose} className="relative z-10">
@@ -51,11 +106,17 @@ export default function CreateEditModal({
                 {isEditMode ? 'Edit Task' : 'Create Task'}
               </DialogTitle>
               <div className="mt-2">
-                <form>
+                {/* Form */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    onConfirm();
+                  }}
+                >
                   <div>
                     <label
                       htmlFor="description"
-                      className="block text-sm/6 font-medium text-gray-900"
+                      className="block text-sm font-medium text-gray-900"
                     >
                       Description
                     </label>
@@ -64,14 +125,16 @@ export default function CreateEditModal({
                         id="description"
                         name="description"
                         type="text"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                        value={form.description}
+                        onChange={handleChange}
+                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm"
                       />
                     </div>
                   </div>
                   <div className="mt-4">
                     <label
                       htmlFor="category"
-                      className="block text-sm/6 font-medium text-gray-900"
+                      className="block text-sm font-medium text-gray-900"
                     >
                       Category
                     </label>
@@ -79,7 +142,9 @@ export default function CreateEditModal({
                       <select
                         id="category"
                         name="category"
-                        className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                        value={form.category}
+                        onChange={handleChange}
+                        className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm"
                       >
                         <option>Work</option>
                         <option>Personal</option>
@@ -92,10 +157,15 @@ export default function CreateEditModal({
                     </div>
                   </div>
                 </form>
+                {/* end form */}
+
+                {/* 🔥 Validation Error Display */}
+                {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
               </div>
             </div>
           </div>
           <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+            {/* Confirm Button */}
             <button
               type="button"
               onClick={onConfirm}
@@ -105,8 +175,9 @@ export default function CreateEditModal({
                   : 'bg-blue-600 hover:bg-blue-500'
               } px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto`}
             >
-              {isEditMode ? 'Save Changes' : 'Create'}
+              {isEditMode ? 'Save' : 'Create'}
             </button>
+            {/* Cancel Button */}
             <button
               type="button"
               onClick={onClose}

@@ -9,16 +9,23 @@ import {
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import DangerModal from './DangerModal';
 import CreateEditModal from './CreateEditModal';
+import { Task } from '../types';
 
-const columnColors: Record<string, string> = {
-  todo: 'bg-blue-100 border-blue-400 text-blue-900',
-  doing: 'bg-yellow-100 border-yellow-400 text-yellow-900',
-  done: 'bg-green-100 border-green-400 text-green-900',
-};
+interface SortableItemProps {
+  task: Task;
+  onDeleteTask?: (taskId: number) => void;
+  onTaskCreatedOrModified?: (updatedTask: Task) => void;
+}
 
-export default function SortableItem({ id }: { id: string }) {
+export default function SortableItem({
+  task,
+  onDeleteTask,
+  onTaskCreatedOrModified,
+}: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+    useSortable({
+      id: task.id.toString(),
+    });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -26,24 +33,15 @@ export default function SortableItem({ id }: { id: string }) {
   };
 
   const [dangerModalOpen, setDangerModalOpen] = useState(false);
-  const showDangerModal = () => {
-    setDangerModalOpen(true);
-  };
-
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const showEditModal = () => {
-    setEditModalOpen(true);
-  };
 
-  const onDelete = (id: string) => {
-    console.log(`Deleting task: ${id}`);
-  };
+  const showDangerModal = () => setDangerModalOpen(true);
+  const showEditModal = () => setEditModalOpen(true);
 
-  const columnType = id.toLowerCase().includes('task')
-    ? 'todo'
-    : id.toLowerCase().includes('doing')
-      ? 'doing'
-      : 'done';
+  const handleDelete = () => {
+    onDeleteTask?.(task.id);
+    setDangerModalOpen(false);
+  };
 
   return (
     <div
@@ -51,23 +49,23 @@ export default function SortableItem({ id }: { id: string }) {
       style={style}
       {...attributes}
       {...listeners}
-      className={`p-4 rounded shadow mb-2 cursor-pointer border ${columnColors[columnType]}`}
+      className={`p-4 rounded shadow mb-2 cursor-pointer border bg-blue-100 border-blue-400 text-blue-900`}
     >
       <div className="flex justify-between items-center">
-        {id}
+        <span>{task.description}</span>
 
-        {/* Menú de opciones */}
         <Menu as="div" className="relative">
           <MenuButton className="p-1 rounded hover:bg-gray-200 cursor-pointer">
             <EllipsisHorizontalIcon className="w-5 h-5 text-gray-600" />
           </MenuButton>
-
           <MenuItems className="absolute w-28 bg-white border border-gray-200 rounded-md shadow-lg z-10">
             <MenuItem>
               {({ active }) => (
                 <button
-                  className={`flex items-center px-4 py-2 w-full text-sm ${active ? 'bg-gray-100' : ''}`}
-                  onClick={() => showEditModal()}
+                  className={`flex items-center px-4 py-2 w-full text-sm ${
+                    active ? 'bg-gray-100' : ''
+                  }`}
+                  onClick={showEditModal}
                 >
                   <PencilIcon className="w-4 h-4 mr-2 text-gray-600" />
                   Edit
@@ -77,8 +75,10 @@ export default function SortableItem({ id }: { id: string }) {
             <MenuItem>
               {({ active }) => (
                 <button
-                  className={`flex items-center px-4 py-2 w-full text-sm text-red-600 ${active ? 'bg-gray-100' : ''}`}
-                  onClick={() => showDangerModal()}
+                  className={`flex items-center px-4 py-2 w-full text-sm text-red-600 ${
+                    active ? 'bg-gray-100' : ''
+                  }`}
+                  onClick={showDangerModal}
                 >
                   <TrashIcon className="w-4 h-4 mr-2" />
                   Delete
@@ -90,29 +90,27 @@ export default function SortableItem({ id }: { id: string }) {
       </div>
 
       <div className="flex justify-between items-center mt-2">
-        <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-          {'Work'}
+        <span className="inline-flex items-center rounded-md bg-blue-800 px-2 py-1 text-xs font-medium text-white">
+          {task.category}
         </span>
       </div>
 
-      {/* Modal de confirmación de eliminación */}
+      {/* DangerModal for confirming delete */}
       {dangerModalOpen && (
         <DangerModal
           onClose={() => setDangerModalOpen(false)}
-          onConfirm={() => {
-            onDelete(id); // Llamar la función para eliminar la tarea
-            setDangerModalOpen(false);
-          }}
+          onConfirm={handleDelete}
         />
       )}
 
-      {/* Modal de edicion */}
+      {/* EditModal for editing */}
       {editModalOpen && (
         <CreateEditModal
           mode="edit"
+          task={task}
           onClose={() => setEditModalOpen(false)}
-          onConfirm={() => {
-            console.log('Editando tarea');
+          onTaskCreatedOrModified={(updatedTask) => {
+            onTaskCreatedOrModified?.(updatedTask);
             setEditModalOpen(false);
           }}
         />

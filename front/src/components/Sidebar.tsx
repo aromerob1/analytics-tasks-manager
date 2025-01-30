@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import {
   Dialog,
@@ -13,7 +11,8 @@ import {
   XMarkIcon,
   HomeIcon,
 } from '@heroicons/react/24/outline';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const navigation = [
   { name: 'Home', link: '/', icon: HomeIcon },
@@ -27,6 +26,14 @@ function classNames(...classes: string[]) {
 export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const currentPath = useLocation().pathname;
+
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <>
@@ -139,10 +146,10 @@ export default function Sidebar() {
                   </ul>
                 </li>
                 <li className="-mx-6 mt-auto">
-                  <Link
+                  <button
                     title="Log out"
-                    to="/login"
-                    className="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-white hover:bg-gray-800"
+                    onClick={handleLogout}
+                    className="flex flex-1 w-full items-center gap-x-4 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 cursor-pointer"
                   >
                     <img
                       alt="User Image"
@@ -150,8 +157,10 @@ export default function Sidebar() {
                       className="size-8 rounded-full bg-gray-800"
                     />
                     <span className="sr-only">Your profile</span>
-                    <span aria-hidden="true">{'Username'}</span>
-                  </Link>
+                    <span aria-hidden="true">
+                      {localStorage.getItem('username') || 'User'}
+                    </span>
+                  </button>
                 </li>
               </ul>
             </nav>

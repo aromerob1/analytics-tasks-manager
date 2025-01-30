@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -13,75 +12,188 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable';
+
+import ColumnDroppable from './ColumnDroppable';
 import SortableItem from './SortableItem';
 import CreateEditModal from './CreateEditModal';
-import { ColumnId, Columns } from '../types';
+import { updateTask } from '../services/TaskService';
+import { ColumnId, Task } from '../types';
 
-// **Estado inicial del tablero Kanban**
-const initialColumns: Columns = {
-  todo: ['Task 1', 'Task 2', 'Task 3'],
-  doing: ['Task 4', 'Task 5'],
-  done: ['Task 6'],
+type ColumnTasks = {
+  todo: Task[];
+  doing: Task[];
+  done: Task[];
 };
 
-export default function KanbanBoard() {
-  const [columns, setColumns] = useState<Columns>(initialColumns);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const showCreateModal = () => {
-    setCreateModalOpen(true);
-  };
+export default function KanbanBoard({ tasks }: { tasks: Task[] }) {
+  const [columns, setColumns] = useState<ColumnTasks>({
+    todo: [],
+    doing: [],
+    done: [],
+  });
 
-  // **Sensores para manejar dispositivos táctiles y mouse**
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    const grouped: ColumnTasks = { todo: [], doing: [], done: [] };
+
+    tasks
+      .filter((t) => !t.deletedAt)
+      .forEach((task) => {
+        grouped[task.status as ColumnId].push(task);
+      });
+
+    setColumns(grouped);
+  }, [tasks]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      // Ignorar elementos con `data-drag-disabled`
-      activationConstraint: {
-        distance: 10, // Opcional: umbral mínimo de arrastre
-      },
-      eventListenerOptions: {
-        passive: false, // Permite detener la propagación
-      },
+      activationConstraint: { distance: 10 },
+      eventListenerOptions: { passive: false },
     })
   );
 
-  // **Manejador cuando se termina de arrastrar**
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over) return;
+    if (active.id === over.id) return;
 
-    // **Encuentra las columnas de origen y destino**
-    const sourceColumn = (Object.keys(columns) as ColumnId[]).find((key) =>
-      columns[key].includes(active.id as string)
-    );
-    const destinationColumn = (Object.keys(columns) as ColumnId[]).find((key) =>
-      columns[key].includes(over.id as string)
-    );
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
 
-    if (sourceColumn && destinationColumn) {
+    const possibleColumns: string[] = ['todo', 'doing', 'done'];
+    const isColumnDrop = possibleColumns.includes(overId);
+
+    const sourceColumn = (Object.keys(columns) as ColumnId[]).find((col) =>
+      columns[col].some((t) => t.id.toString() === activeId)
+    );
+    if (!sourceColumn) return;
+
+    if (isColumnDrop) {
       setColumns((prev) => {
         const sourceItems = [...prev[sourceColumn]];
-        const destinationItems = [...prev[destinationColumn]];
+        const activeIndex = sourceItems.findIndex(
+          (t) => t.id.toString() === activeId
+        );
 
-        const activeIndex = sourceItems.indexOf(active.id as string);
-        const overIndex = destinationItems.indexOf(over.id as string);
+        const [movedTask] = sourceItems.splice(activeIndex, 1);
+        movedTask.status = overId as ColumnId;
 
-        if (sourceColumn === destinationColumn) {
-          // **Reordenar dentro de la misma columna**
-          const updatedItems = arrayMove(sourceItems, activeIndex, overIndex);
-          return { ...prev, [sourceColumn]: updatedItems };
+        const payload: Partial<Task> = { status: movedTask.status };
+        if (movedTask.status === 'done') {
+          payload.completedAt = new Date();
         } else {
-          // **Mover entre columnas**
-          sourceItems.splice(activeIndex, 1);
-          destinationItems.splice(overIndex, 0, active.id as string);
+          payload.completedAt = null;
+        }
+
+        updateTask(movedTask.id, payload).catch((error) => {
+          console.error('Failed to update task status on server:', error);
+        });
+
+        const destinationItems = [...prev[overId as ColumnId]];
+        destinationItems.push(movedTask);
+
+        return {
+          ...prev,
+          [sourceColumn]: sourceItems,
+          [overId]: destinationItems,
+        };
+      });
+    } else {
+      const destinationColumn = (Object.keys(columns) as ColumnId[]).find(
+        (col) => columns[col].some((t) => t.id.toString() === overId)
+      );
+      if (!destinationColumn) return;
+
+      if (sourceColumn === destinationColumn) {
+        setColumns((prev) => {
+          const items = [...prev[sourceColumn]];
+          const activeIndex = items.findIndex(
+            (t) => t.id.toString() === activeId
+          );
+          const overIndex = items.findIndex((t) => t.id.toString() === overId);
+          const reordered = arrayMove(items, activeIndex, overIndex);
+          return { ...prev, [sourceColumn]: reordered };
+        });
+      } else {
+        setColumns((prev) => {
+          const sourceItems = [...prev[sourceColumn]];
+          const destinationItems = [...prev[destinationColumn]];
+
+          const activeIndex = sourceItems.findIndex(
+            (t) => t.id.toString() === activeId
+          );
+          const overIndex = destinationItems.findIndex(
+            (t) => t.id.toString() === overId
+          );
+
+          const [movedTask] = sourceItems.splice(activeIndex, 1);
+          movedTask.status = destinationColumn as ColumnId;
+
+          const payload: Partial<Task> = { status: movedTask.status };
+          if (movedTask.status === 'done') {
+            payload.completedAt = new Date();
+          } else {
+            payload.completedAt = null;
+          }
+
+          updateTask(movedTask.id, payload).catch((error) => {
+            console.error('Failed to update task status on server:', error);
+          });
+
+          destinationItems.splice(overIndex, 0, movedTask);
 
           return {
             ...prev,
             [sourceColumn]: sourceItems,
             [destinationColumn]: destinationItems,
           };
-        }
-      });
+        });
+      }
     }
+  };
+
+  const handleCreatedOrModified = (newOrUpdatedTask: Task) => {
+    setColumns((prev) => {
+      const newCols = { ...prev };
+      (Object.keys(newCols) as ColumnId[]).forEach((col) => {
+        newCols[col] = newCols[col].filter((t) => t.id !== newOrUpdatedTask.id);
+      });
+
+      const colKey = newOrUpdatedTask.status as ColumnId;
+      newCols[colKey].push(newOrUpdatedTask);
+      return newCols;
+    });
+  };
+
+  const handleDeleteTask = (taskId: number) => {
+    let found: Task | undefined;
+    let foundColumn: ColumnId | undefined;
+    for (const col of ['todo', 'doing', 'done'] as ColumnId[]) {
+      const item = columns[col].find((t) => t.id === taskId);
+      if (item) {
+        found = item;
+        foundColumn = col;
+        break;
+      }
+    }
+    if (!found || !foundColumn) return;
+
+    const payload = { deletedAt: new Date() };
+
+    updateTask(taskId, payload)
+      .then(() => {
+        setColumns((prev) => {
+          const newCols = { ...prev };
+          newCols[foundColumn!] = newCols[foundColumn!].filter(
+            (t) => t.id !== taskId
+          );
+          return newCols;
+        });
+      })
+      .catch((error) => {
+        console.error('Failed to soft-delete task:', error);
+      });
   };
 
   return (
@@ -91,42 +203,46 @@ export default function KanbanBoard() {
       onDragEnd={handleDragEnd}
     >
       <div className="flex space-x-4 items-start">
-        {Object.entries(columns).map(([columnId, tasks]) => (
-          <div
-            key={columnId}
-            className="w-1/3 bg-white p-4 rounded shadow-lg border border-gray-300"
-          >
-            <h2 className="text-xl font-semibold pb-2 border-b-2 mb-4 text-blue-700 border-blue-400">
-              {columnId.toUpperCase()}
-            </h2>
+        {(['todo', 'doing', 'done'] as ColumnId[]).map((columnId) => {
+          const tasksInColumn = columns[columnId];
 
-            <SortableContext
-              items={tasks}
-              strategy={verticalListSortingStrategy}
-            >
-              {tasks.map((task) => (
-                <SortableItem key={task} id={task} />
-              ))}
-            </SortableContext>
+          return (
+            <ColumnDroppable key={columnId} columnId={columnId}>
+              <h2 className="text-xl font-semibold pb-2 border-b-2 mb-4 text-blue-700 border-blue-400">
+                {columnId.toUpperCase()}
+              </h2>
+              <SortableContext
+                items={tasksInColumn.map((t) => t.id.toString())}
+                strategy={verticalListSortingStrategy}
+              >
+                {tasksInColumn.map((task) => (
+                  <SortableItem
+                    key={task.id}
+                    task={task}
+                    onDeleteTask={handleDeleteTask}
+                    onTaskCreatedOrModified={handleCreatedOrModified}
+                  />
+                ))}
+              </SortableContext>
 
-            <button
-              className="w-full p-2 mt-2 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 cursor-pointer"
-              onClick={showCreateModal}
-            >
-              + Add Task
-            </button>
-          </div>
-        ))}
+              {columnId === 'todo' && (
+                <button
+                  className="w-full p-2 mt-2 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 cursor-pointer"
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  + Add Task
+                </button>
+              )}
+            </ColumnDroppable>
+          );
+        })}
       </div>
-      {/* Modal de creacion */}
+
       {createModalOpen && (
         <CreateEditModal
           mode="create"
           onClose={() => setCreateModalOpen(false)}
-          onConfirm={() => {
-            // Lógica para crear una nueva tarea
-            setCreateModalOpen(false);
-          }}
+          onTaskCreatedOrModified={handleCreatedOrModified}
         />
       )}
     </DndContext>

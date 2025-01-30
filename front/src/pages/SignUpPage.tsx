@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export default function SignUpPage() {
-  const { registerUser } = useAuth(); // Get registerUser from AuthContext
+  const { registerUser } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
@@ -14,12 +14,12 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Reset errors before submission
+    setError(null);
     try {
       await registerUser(form.email, form.password);
-      navigate('/'); // Redirect after successful sign-up
+      navigate('/');
     } catch (error) {
-      setError("Registration failed. Please try again.");
+      setError('Registration failed. Please try again.');
     }
   };
 
@@ -40,7 +40,10 @@ export default function SignUpPage() {
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-900">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-900"
+            >
               Email
             </label>
             <div className="mt-2">
@@ -58,7 +61,10 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-900">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-900"
+            >
               Password
             </label>
             <div className="mt-2">
@@ -87,7 +93,10 @@ export default function SignUpPage() {
 
         <p className="mt-10 text-center text-sm text-gray-500">
           Have an account?{' '}
-          <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-500">
+          <Link
+            to="/login"
+            className="font-semibold text-blue-600 hover:text-blue-500"
+          >
             Login
           </Link>
         </p>
